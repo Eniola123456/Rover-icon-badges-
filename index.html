@@ -1,1 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Red Hat Rover xxx - Design custom badges for Red Hat associates"/>
+  <meta name="author" content="Red Hat Design Team"/>
+  <title>Red Hat Rover xxx</title>
 
+  <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root {
+      --redhat-red: #EE0000;
+      --redhat-dark-red: #A30000;
+      --redhat-black: #151515;
+      --redhat-gray: #72767B;
+    }
+
+    body {
+      font-family: 'Red Hat Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+
+    .container-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+      padding: 3rem;
+      margin-bottom: 2rem;
+    }
+
+    .btn {
+      padding: 0.875rem 2rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--redhat-red);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--redhat-dark-red);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(238, 0, 0, 0.2);
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #e5e7eb;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .color-swatch {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      cursor: pointer;
+      border: 4px solid transparent;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .color-swatch:hover {
+      transform: scale(1.05);
+    }
+
+    .color-swatch.selected {
+      border-color: var(--redhat-red);
+      box-shadow: 0 0 0 4px rgba(238, 0, 0, 0.1);
+    }
+
+    .badge-container {
+      width: 320px;
+      height: 320px;
+      border-radius: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      margin: 2rem auto;
+      position: relative;
+    }
+
+    .badge-inner {
+      width: 280px;
+      height: 280px;
+      border-radius: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 5px solid #f3f4f6;
+      border-top-color: var(--redhat-red);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 1rem 1.25rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      font-family: 'Red Hat Display', sans-serif;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--redhat-red);
+      box-shadow: 0 0 0 3px rgba(238, 0, 0, 0.1);
+    }
+
+    .char-counter {
+      font-size: 0.875rem;
+      color: var(--redhat-gray);
+      margin-top: 0.5rem;
+    }
+
+    .char-counter.warning {
+      color: #f59e0b;
+    }
+
+    .char-counter.error {
+      color: var(--redhat-red);
+    }
+
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .step-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #d1d5db;
+      transition: all 0.3s ease;
+    }
+
+    .step-dot.active {
+      background: var(--redhat-red);
+      width: 32px;
+      border-radius: 6px;
+    }
+
+    .icon-option {
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      border-radius: 12px;
+      text-align: center;
+      user-select: none;
+    }
+
+    .icon-option:hover {
+      background: #f9fafb;
+    }
+
+    .icon-option img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .icon-option .icon-name {
+      font-size: 0.75rem;
+      color: #374151;
+      text-align: center;
+      margin-top: 0.5rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .icon-option.selected {
+      border-radius: 12px;
+      outline: 3px solid rgba(238,0,0,0.12);
+      background: #fff;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+
+    @media (max-width: 768px) {
+      .card {
+        padding: 1.5rem;
+      }
+
+      .badge-container {
+        width: 280px;
+        height: 280px;
+        border-radius: 50px;
+      }
+
+      .badge-inner {
+        width: 240px;
+        height: 240px;
+        border-radius: 40px;
+      }
+    }
+
+    .toast {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container-wrapper">
+    <div class="text-center mb-8">
+      <h1 class="text-5xl font-black mb-3" style="color: var(--redhat-red);">
+        Red Hat Rover xxx
+      </h1>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+        Design custom Rover Badges for Red Hat associates. Create, customize, and download your badge in minutes.
+      </p>
+    </div>
+
+    <div class="step-indicator">
+      <div class="step-dot" data-step="1"></div>
+      <div class="step-dot" data-step="2"></div>
+      <div class="step-dot" data-step="3"></div>
+      <div class="step-dot" data-step="4"></div>
+    </div>
+
+    <div class="card">
+      <section id="step-1" class="step-content">
+        <h2 class="text-3xl font-bold text-center mb-6">Step 1: Enter Badge Text</h2>
+        <p class="text-center text-gray-600 mb-8">Enter up to 9 characters per line (18 total)</p>
+
+        <div class="max-w-xl mx-auto space-y-4">
+          <div>
+            <label class="block text-sm font-semibold mb-2 text-gray-700">Line 1</label>
+            <input
+              type="text"
+              id="badgeLine1"
+              class="form-input uppercase"
+              placeholder="ROVER"
+              maxlength="9"
+              autocomplete="off"
+            >
+            <div class="char-counter" id="counter1">0 / 9 characters</div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold mb-2 text-gray-700">Line 2</label>
+            <input
+              type="text"
+              id="badgeLine2"
+              class="form-input uppercase"
+              placeholder="BADGE"
+              maxlength="9"
+              autocomplete="off"
+            >
+            <div class="char-counter" id="counter2">0 / 9 characters</div>
+          </div>
+
+          <div class="char-counter" id="totalCounter">Total: 0 / 18 characters</div>
+        </div>
+
+        <div class="flex gap-4 mt-8 max-w-xl mx-auto">
+          <button class="btn btn-secondary flex-1" disabled>Back</button>
+          <button class="btn btn-primary flex-1" id="nextStep1">Next</button>
+        </div>
+      </section>
+
+      <section id="step-2" class="step-content hidden">
+        <h2 class="text-3xl font-bold text-center mb-6">Step 2: Choose Your Colors</h2>
+        <p class="text-center text-gray-600 mb-8">Select a color scheme for your badge</p>
+
+        <div class="flex flex-wrap justify-center gap-6 mb-8">
+          <div class="color-swatch" data-bg="#E0F0FF" data-border="#92C5F9" style="background: #E0F0FF;" title="Blue (Default)"></div>
+          <div class="color-swatch" data-bg="#FFFFFF" data-border="#EE0000" style="background: #FFFFFF;" title="Red Hat Red"></div>
+          <div class="color-swatch" data-bg="#FFF5F5" data-border="#A30000" style="background: #FFF5F5;" title="Dark Red"></div>
+          <div class="color-swatch" data-bg="#FFF8F0" data-border="#EC7A08" style="background: #FFF8F0;" title="Orange"></div>
+          <div class="color-swatch" data-bg="#FFFBF0" data-border="#F0AB00" style="background: #FFFBF0;" title="Gold"></div>
+          <div class="color-swatch" data-bg="#F3FAF2" data-border="#3E8635" style="background: #F3FAF2;" title="Green"></div>
+          <div class="color-swatch" data-bg="#F8F7FD" data-border="#8476D1" style="background: #F8F7FD;" title="Purple"></div>
+          <div class="color-swatch" data-bg="#F5F5F5" data-border="#151515" style="background: #F5F5F5;" title="Black"></div>
+        </div>
+
+        <div class="flex gap-4 mt-8 max-w-xl mx-auto">
+          <button class="btn btn-secondary flex-1" id="backStep2">Back</button>
+          <button class="btn btn-primary flex-1" id="nextStep2" disabled>Next</button>
+        </div>
+      </section>
+
+      <section id="step-3" class="step-content hidden">
+        <h2 class="text-3xl font-bold text-center mb-6">Step 3: Choose an Icon</h2>
+        <p class="text-center text-gray-600 mb-8">Select an icon from our library</p>
+
+        <div class="max-w-xl mx-auto space-y-6">
+          <div>
+            <label class="block text-sm font-semibold mb-2 text-gray-700">Icon Library</label>
+            <div id="iconGrid" class="grid grid-cols-4 gap-4" aria-live="polite">
+              Loading icons...
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-4 mt-8 max-w-xl mx-auto">
+          <button class="btn btn-secondary flex-1" id="backStep3">Back</button>
+          <button class="btn btn-primary flex-1" id="nextStep3" disabled>Generate Badge</button>
+        </div>
+      </section>
+
+      <section id="step-4" class="step-content hidden">
+        <h2 class="text-3xl font-bold text-center mb-6">Your Badge is Ready!</h2>
+
+        <div id="badgeLoading" class="text-center py-12">
+          <div class="spinner mx-auto mb-4"></div>
+          <p class="text-gray-600">Generating your badge...</p>
+        </div>
+
+        <div id="badgePreview" class="hidden">
+          <div id="badgeElement" class="badge-container">
+            <div id="badgeInner" class="badge-inner">
+              <div id="badgeText" class="font-black text-3xl leading-tight mb-4"></div>
+              <img id="badgeIcon" class="w-20 h-20 object-contain" alt="Badge Icon">
+            </div>
+          </div>
+
+          <div class="flex flex-wrap justify-center gap-4 mt-8">
+            <button class="btn btn-primary" id="downloadBadge">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              Download PNG
+            </button>
+            <button class="btn btn-secondary" id="shareBadge">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              Share
+            </button>
+          </div>
+
+          <div class="flex gap-4 mt-8 max-w-xl mx-auto">
+            <button class="btn btn-secondary flex-1" id="backStep4">Edit Badge</button>
+            <button class="btn btn-primary flex-1" id="createAnother">Create Another</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="text-center text-gray-500 text-sm mt-8">
+      <p>2024 Red Hat, Inc. | Built for Red Hat Associates</p>
+    </div>
+  </div>
+
+  <script>
+    var BadgeApp = {
+      currentStep: 1,
+      state: {
+        line1: '',
+        line2: '',
+        backgroundColor: '#E0F0FF',
+        borderColor: '#92C5F9',
+        iconUrl: '',
+        customIconUrl: ''
+      },
+
+      init: function() {
+        this.setupEventListeners();
+        this.loadIcons();
+        this.updateStepIndicator();
+      },
+
+      setupEventListeners: function() {
+        var self = this;
+
+        document.getElementById('badgeLine1').addEventListener('input', function(e) {
+          self.state.line1 = e.target.value.toUpperCase();
+          e.target.value = self.state.line1;
+          self.updateCharacterCount();
+        });
+
+        document.getElementById('badgeLine2').addEventListener('input', function(e) {
+          self.state.line2 = e.target.value.toUpperCase();
+          e.target.value = self.state.line2;
+          self.updateCharacterCount();
+        });
+
+        document.getElementById('nextStep1').addEventListener('click', function() {
+          self.goToStep(2);
+        });
+
+        document.getElementById('backStep2').addEventListener('click', function() {
+          self.goToStep(1);
+        });
+
+        document.getElementById('nextStep2').addEventListener('click', function() {
+          self.goToStep(3);
+        });
+
+        document.getElementById('backStep3').addEventListener('click', function() {
+          self.goToStep(2);
+        });
+
+        document.getElementById('nextStep3').addEventListener('click', function() {
+          self.goToStep(4);
+        });
+
+        document.getElementById('backStep4').addEventListener('click', function() {
+          self.goToStep(3);
+        });
+
+        document.getElementById('createAnother').addEventListener('click', function() {
+          self.resetAndStart();
+        });
+
+        document.querySelectorAll('.color-swatch').forEach(function(swatch) {
+          swatch.addEventListener('click', function() {
+            self.selectColor(swatch);
+          });
+        });
+
+        document.getElementById('downloadBadge').addEventListener('click', function() {
+          self.downloadBadge();
+        });
+
+        document.getElementById('shareBadge').addEventListener('click', function() {
+          self.shareBadge();
+        });
+      },
+
+      updateCharacterCount: function() {
+        var line1Length = this.state.line1.length;
+        var line2Length = this.state.line2.length;
+        var total = line1Length + line2Length;
+
+        document.getElementById('counter1').textContent = line1Length + ' / 9 characters';
+        document.getElementById('counter2').textContent = line2Length + ' / 9 characters';
+        document.getElementById('totalCounter').textContent = 'Total: ' + total + ' / 18 characters';
+
+        document.getElementById('counter1').className = line1Length > 7 ? 'char-counter warning' : 'char-counter';
+        document.getElementById('counter2').className = line2Length > 7 ? 'char-counter warning' : 'char-counter';
+        document.getElementById('totalCounter').className = total > 15 ? 'char-counter warning' : 'char-counter';
+      },
+
+      selectColor: function(swatch) {
+        document.querySelectorAll('.color-swatch').forEach(function(s) {
+          s.classList.remove('selected');
+        });
+        swatch.classList.add('selected');
+
+        this.state.backgroundColor = swatch.dataset.bg;
+        this.state.borderColor = swatch.dataset.border;
+
+        document.getElementById('nextStep2').disabled = false;
+      },
+
+      validateStep3: function() {
+        var hasIcon = this.state.iconUrl;
+        document.getElementById('nextStep3').disabled = !hasIcon;
+      },
+
+      goToStep: function(stepNumber) {
+        var self = this;
+
+        document.querySelectorAll('.step-content').forEach(function(step) {
+          step.classList.add('hidden');
+        });
+
+        document.getElementById('step-' + stepNumber).classList.remove('hidden');
+        this.currentStep = stepNumber;
+        this.updateStepIndicator();
+
+        if (stepNumber === 4) {
+          this.generateBadge();
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+
+      updateStepIndicator: function() {
+        var self = this;
+        document.querySelectorAll('.step-dot').forEach(function(dot, index) {
+          if (index + 1 === self.currentStep) {
+            dot.classList.add('active');
+          } else {
+            dot.classList.remove('active');
+          }
+        });
+      },
+
+      loadIcons: function() {
+        var self = this;
+        var grid = document.getElementById('iconGrid');
+        grid.textContent = 'Loading icons...';
+
+        // Use the local icons.json file
+        fetch('images/icons.json')
+          .then(function(response) {
+            if (!response.ok) {
+              throw new Error('Failed to load icons.json');
+            }
+            return response.json();
+          })
+          .then(function(data) {
+            grid.innerHTML = '';
+
+            if (!data || !Array.isArray(data.icons) || data.icons.length === 0) {
+              grid.textContent = 'No icons available.';
+              return;
+            }
+
+            data.icons.forEach(function(icon) {
+              var card = document.createElement('div');
+              card.className = 'icon-option p-3';
+              card.tabIndex = 0;
+              card.setAttribute('role', 'button');
+              card.dataset.url = icon.url || '';
+              var name = icon.name || '';
+              // image and name
+              card.innerHTML = '<img src="' + (icon.url || '') + '" alt="' + name.replace(/"/g,'') + '"><div class="icon-name" title="' + name.replace(/"/g,'') + '">' + name + '</div>';
+
+              card.addEventListener('click', function() {
+                // clear previous selection
+                document.querySelectorAll('.icon-option').forEach(function(i) { i.classList.remove('selected'); });
+                card.classList.add('selected');
+
+                self.state.iconUrl = card.dataset.url;
+                self.validateStep3();
+              });
+
+              card.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  card.click();
+                }
+              });
+
+              grid.appendChild(card);
+            });
+          })
+          .catch(function(error) {
+            console.error('Failed to load icons:', error);
+            grid.textContent = 'Failed to load icons';
+            self.showToast('Failed to load icon library', 'error');
+          });
+      },
+
+      generateBadge: function() {
+        var self = this;
+        document.getElementById('badgeLoading').classList.remove('hidden');
+        document.getElementById('badgePreview').classList.add('hidden');
+
+        setTimeout(function() {
+          var textLines = [self.state.line1, self.state.line2].filter(function(line) {
+            return line;
+          });
+          document.getElementById('badgeText').innerHTML = textLines.join('<br>') || 'ROVER<br>BADGE';
+
+          var badgeInner = document.getElementById('badgeInner');
+          var badgeElement = document.getElementById('badgeElement');
+
+          badgeInner.style.backgroundColor = self.state.backgroundColor;
+          badgeInner.style.color = self.state.borderColor;
+          badgeElement.style.backgroundColor = self.state.borderColor;
+
+          var iconUrl = self.state.iconUrl;
+          var badgeIcon = document.getElementById('badgeIcon');
+
+          var processedUrl = self.processIconUrl(iconUrl);
+          badgeIcon.src = processedUrl;
+
+          badgeIcon.onerror = function() {
+            badgeIcon.src = 'https://images.weserv.nl/?url=' + encodeURIComponent(processedUrl || '');
+          };
+
+          document.getElementById('badgeLoading').classList.add('hidden');
+          document.getElementById('badgePreview').classList.remove('hidden');
+        }, 1200);
+      },
+
+      processIconUrl: function(url) {
+        if (!url) return '';
+        var driveMatch = url.match(/\/d\/([^/]+)\//);
+        if (driveMatch) {
+          return 'https://drive.google.com/uc?export=view&id=' + driveMatch[1];
+        }
+        return url;
+      },
+
+      downloadBadge: function() {
+        var self = this;
+        var badge = document.getElementById('badgeElement');
+
+        html2canvas(badge, {
+          backgroundColor: null,
+          scale: 2
+        }).then(function(canvas) {
+          var link = document.createElement('a');
+          link.download = 'RoverBadge-' + (self.state.line1 || 'Badge') + '.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+
+          self.showToast('Badge downloaded successfully!', 'success');
+        }).catch(function(error) {
+          console.error('Download failed:', error);
+          self.showToast('Download failed. Please try again.', 'error');
+        });
+      },
+
+      shareBadge: function() {
+        this.showToast('Share functionality coming soon!', 'info');
+      },
+
+      showToast: function(message, type) {
+        type = type || 'info';
+        var toast = document.createElement('div');
+        toast.className = 'toast';
+
+        var colors = {
+          success: '#10b981',
+          error: '#ef4444',
+          info: '#3b82f6'
+        };
+
+        toast.style.borderLeft = '4px solid ' + (colors[type] || colors.info);
+        toast.textContent = message;
+
+        document.body.appendChild(toast);
+
+        setTimeout(function() {
+          toast.remove();
+        }, 3000);
+      },
+
+      resetAndStart: function() {
+        this.state = {
+          line1: '',
+          line2: '',
+          backgroundColor: '#E0F0FF',
+          borderColor: '#92C5F9',
+          iconUrl: '',
+          customIconUrl: ''
+        };
+
+        document.getElementById('badgeLine1').value = '';
+        document.getElementById('badgeLine2').value = '';
+
+        // clear grid selection if present
+        document.querySelectorAll('.icon-option').forEach(function(i) { i.classList.remove('selected'); });
+
+        document.querySelectorAll('.color-swatch').forEach(function(s) {
+          s.classList.remove('selected');
+        });
+
+        this.updateCharacterCount();
+        this.goToStep(1);
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      BadgeApp.init();
+    });
+  </script>
+</body>
+</html>
